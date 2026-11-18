@@ -4,7 +4,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.SessionFactory;
 import org.hibernate.stat.Statistics;
-import org.ikigaidigital.PostgresTestcontainer;
+import org.ikigaidigital.PostgresIntegrationTest;
 import org.ikigaidigital.TimeDeposit;
 import org.ikigaidigital.application.port.in.UpdateAllBalancesUseCase;
 import org.ikigaidigital.domain.TimeDepositDetails;
@@ -12,10 +12,7 @@ import org.ikigaidigital.domain.Withdrawal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -24,10 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
 
-/** Runs against real Postgres with the Flyway schema. Each test rolls back. */
-@SpringBootTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
-@Import(PostgresTestcontainer.class)
-@Transactional
+/** Runs against real Postgres with the Flyway schema. */
+@PostgresIntegrationTest
 class TimeDepositPersistenceAdapterIT {
 
     @Autowired

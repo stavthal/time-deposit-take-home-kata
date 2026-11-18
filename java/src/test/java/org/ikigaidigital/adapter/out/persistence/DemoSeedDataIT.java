@@ -1,21 +1,15 @@
 package org.ikigaidigital.adapter.out.persistence;
 
-import org.ikigaidigital.PostgresTestcontainer;
+import org.ikigaidigital.PostgresIntegrationTest;
 import org.ikigaidigital.domain.TimeDepositDetails;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Same setup as {@link TimeDepositPersistenceAdapterIT}, so Spring reuses one context and one container. */
-@SpringBootTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
-@Import(PostgresTestcontainer.class)
-@Transactional
+@PostgresIntegrationTest
 class DemoSeedDataIT {
 
     @Autowired
