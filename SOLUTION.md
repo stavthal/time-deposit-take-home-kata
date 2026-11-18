@@ -114,6 +114,7 @@ All assumptions, with reasons and code locations, are in [`ASSUMPTIONS.md`](ASSU
 - Swagger UI and the spec pages do not count as endpoints. No Actuator ([#9](ASSUMPTIONS.md)).
 - Table and column names match the README exactly, quoted for Postgres ([#18](ASSUMPTIONS.md)).
 - The update runs in one transaction ([#4](ASSUMPTIONS.md)). The read locks the rows (`PESSIMISTIC_WRITE`), so two updates at once cannot lose a month. `ConcurrentBalanceUpdateIT` checks it.
+  This protects the app under load only. Paying each month once is idempotency, below.
 - Updating balances does not advance `days` ([#10](ASSUMPTIONS.md)).
 - Trade-off: `/v3/api-docs` stays on next to the hand written spec, because springdoc 2.9.1 turns Swagger UI off with it. A test checks both list only two endpoints.
 - Trade-off: the local run uses the Testcontainers dev runner, not a `docker-compose.yml`.
@@ -124,7 +125,9 @@ All assumptions, with reasons and code locations, are in [`ASSUMPTIONS.md`](ASSU
 - Input validation, for example a null `planType` or `balance`, which the original code turns into a `NullPointerException`.
 - Error handling with a consistent error body, instead of default Spring errors.
 - Pagination: page the deposits behind the same `TimeDepositRepository` port instead of loading all of them.
-- Idempotency on the update: a period key (for example the month) so a repeated POST cannot add interest twice.
+- Idempotency on the update. This is the real fix for repeated runs, not applying a month per call.
+  An `interestRuns` table keyed by period (for example `2026-11`), written in the same transaction.
+  A repeated POST for a recorded period changes nothing. Design and reasons: [`ASSUMPTIONS.md`](ASSUMPTIONS.md#idempotency-the-real-fix-for-repeated-runs-not-built).
 - Agree with the business what advances `days` and who calls the update each month.
 
 ## AI usage

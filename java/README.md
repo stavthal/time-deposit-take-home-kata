@@ -60,6 +60,7 @@ First rows of the demo data:
 3. Run the GET again to see the new balances (table below).
 
 Each POST adds one more month, so it is not idempotent. Restart the app to reset the data.
+In production a month must be paid once. The planned fix is in `ASSUMPTIONS.md`, section "Idempotency".
 
 Same calls with curl:
 
