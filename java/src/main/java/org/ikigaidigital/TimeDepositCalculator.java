@@ -27,8 +27,12 @@ public class TimeDepositCalculator {
                         .monthlyInterest(deposit);
             }
 
-            double newBalance = deposit.getBalance() + (new BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)).doubleValue();
+            double newBalance = deposit.getBalance() + roundToCents(interest);
             deposit.setBalance(newBalance);
         }
+    }
+
+    private static double roundToCents(double amount) {
+        return new BigDecimal(amount).setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 }
