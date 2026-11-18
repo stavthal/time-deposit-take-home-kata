@@ -62,3 +62,24 @@ Show me the CLAUDE.md content and the git log when done.
 ```
 
 Result: `CLAUDE.md`, `ASSUMPTIONS.md`, `AI_USAGE.md`, this file, `docs/ai/analysis.md`, two commits.
+
+## Phase 1: characterization tests
+
+### Prompt 1.1: pin current behavior
+
+```text
+No need to print claude code here, let's continue to phase 1.
+```
+
+Result: `TimeDepositCalculatorTest` rewritten with tests that pin today's results.
+Expected values come from the real output on JDK 17, checked with exact double equality.
+
+### Prompt 1.2: commit and close the phase
+
+```text
+yes. and tell me if we are done with phase 1
+```
+
+Result: a manual mutation check on a scratch copy (operators, rounding mode, scale, rate, case)
+found that `HALF_UP` to `HALF_EVEN` survived. Added an exact half cent test (`150.00` basic gives `150.13`).
+Every mutant now fails. 23 tests, one commit.
