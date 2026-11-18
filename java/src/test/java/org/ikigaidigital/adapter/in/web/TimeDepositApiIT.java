@@ -2,6 +2,7 @@ package org.ikigaidigital.adapter.in.web;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.ikigaidigital.PostgresIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,8 +24,6 @@ class TimeDepositApiIT {
 
     @Autowired
     private MockMvc mockMvc;
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @Test
     void getReturnsTheSeedDataWithWithdrawals() throws Exception {
@@ -58,17 +57,24 @@ class TimeDepositApiIT {
     }
 
     @Test
-    void openApiContractHasExactlyTheTwoEndpoints() throws Exception {
+    void handWrittenContractHasExactlyTheTwoEndpoints() throws Exception {
+        String body = mockMvc.perform(get("/openapi.yaml"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(operations(new YAMLMapper().readTree(body)))
+                .containsExactlyInAnyOrder("get /time-deposits", "post /time-deposits/balance-updates");
+    }
+
+    // Fails if a route is added in code without being added to openapi.yaml.
+    @Test
+    void runningAppServesExactlyTheTwoEndpoints() throws Exception {
         String body = mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        JsonNode paths = objectMapper.readTree(body).get("paths");
 
-        List<String> operations = new ArrayList<>();
-        paths.fields().forEachRemaining(path ->
-                path.getValue().fieldNames().forEachRemaining(verb -> operations.add(verb + " " + path.getKey())));
-
-        assertThat(operations).containsExactlyInAnyOrder("get /time-deposits", "post /time-deposits/balance-updates");
+        assertThat(operations(new ObjectMapper().readTree(body)))
+                .containsExactlyInAnyOrder("get /time-deposits", "post /time-deposits/balance-updates");
     }
 
     @Test
@@ -76,5 +82,19 @@ class TimeDepositApiIT {
         mockMvc.perform(get("/docs"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(header().string("Location", "/swagger-ui/index.html"));
+    }
+
+    @Test
+    void swaggerUiShowsTheHandWrittenContract() throws Exception {
+        mockMvc.perform(get("/v3/api-docs/swagger-config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.url").value("/openapi.yaml"));
+    }
+
+    private static List<String> operations(JsonNode spec) {
+        List<String> operations = new ArrayList<>();
+        spec.get("paths").fields().forEachRemaining(path ->
+                path.getValue().fieldNames().forEachRemaining(verb -> operations.add(verb + " " + path.getKey())));
+        return operations;
     }
 }

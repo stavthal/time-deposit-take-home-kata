@@ -23,3 +23,6 @@ springdoc:
   swagger-ui:
     # Swagger UI at http://localhost:8080/docs.
     path: /docs
+    # Contract first: the UI shows the hand written openapi.yaml, not the spec built at /v3/api-docs.
+    # /v3/api-docs stays on because springdoc 2.9.1 turns Swagger UI off with it.
+    url: /openapi.yaml
