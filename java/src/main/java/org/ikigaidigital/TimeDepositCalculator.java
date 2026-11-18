@@ -17,17 +17,17 @@ public class TimeDepositCalculator {
             "student", new StudentInterestPolicy(),
             "premium", new PremiumInterestPolicy());
 
-    public void updateBalance(List<TimeDeposit> xs) {
-        for (int i = 0; i < xs.size(); i++) {
+    public void updateBalance(List<TimeDeposit> deposits) {
+        for (TimeDeposit deposit : deposits) {
             double interest = 0;
 
-            if (xs.get(i).getDays() > 30) {
-                interest += POLICIES.getOrDefault(xs.get(i).getPlanType(), NO_INTEREST)
-                        .monthlyInterest(xs.get(i));
+            if (deposit.getDays() > 30) {
+                interest += POLICIES.getOrDefault(deposit.getPlanType(), NO_INTEREST)
+                        .monthlyInterest(deposit);
             }
 
-            double a2d = xs.get(i).getBalance() + (new BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)).doubleValue();
-            xs.get(i).setBalance(a2d);
+            double newBalance = deposit.getBalance() + (new BigDecimal(interest).setScale(2, RoundingMode.HALF_UP)).doubleValue();
+            deposit.setBalance(newBalance);
         }
     }
 }
