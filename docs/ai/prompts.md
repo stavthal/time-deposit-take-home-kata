@@ -88,8 +88,8 @@ Quote exact operators and boundaries from the calculator.
 ```
 
 Intent: understand the task and the existing code read only, before deciding anything, with exact boundaries quoted so later tests can pin them.
-What I checked: TODO
-What I changed or rejected: TODO
+What I checked: I compared the quoted operators (`> 30`, `> 45`, `< 366`) with `TimeDepositCalculator.java`, and saw the baseline `mvn test` gave `Tests run: 1` from the placeholder test.
+What I changed or rejected: the analysis missed some traps, so I supplied the full trap list myself in Prompt 0.2.
 
 Result: the analysis, saved in Prompt 0.2 as `docs/ai/analysis.md`.
 
@@ -102,8 +102,8 @@ No need to print claude code here, let's continue to phase 1.
 ```
 
 Intent: approve the plan to replace the placeholder test with characterization tests that pin today's `updateBalance` results for every plan and boundary.
-What I checked: TODO
-What I changed or rejected: TODO
+What I checked: I read the plan before approving it, and checked it touched only the test file and left production code alone.
+What I changed or rejected: I turned down the agent's offer to print the Claude Code output here, and went straight to the tests.
 
 Result: `TimeDepositCalculatorTest` rewritten with tests that pin today's results.
 Expected values come from the real output on JDK 17, checked with exact double equality.
@@ -116,8 +116,8 @@ yes. and tell me if we are done with phase 1
 ```
 
 Intent: approve committing the characterization tests and ask for a check that the phase is complete.
-What I checked: TODO
-What I changed or rejected: TODO
+What I checked: I read the mutation check results, including the surviving `HALF_UP` to `HALF_EVEN` mutant, before calling the phase done.
+What I changed or rejected: I did not accept the phase as done while a mutant survived. The `150.00` basic test went in first.
 
 Result: a manual mutation check on a scratch copy (operators, rounding mode, scale, rate, case)
 found that `HALF_UP` to `HALF_EVEN` survived. Added an exact half cent test (`150.00` basic gives `150.13`).
