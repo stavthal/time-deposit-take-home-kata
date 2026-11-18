@@ -17,6 +17,8 @@ public class UpdateAllBalancesService implements UpdateAllBalancesUseCase {
         this.calculator = calculator;
     }
 
+    // Assumption: days are not advanced. The frozen calculator never changes them,
+    // and the README does not say what moves a deposit to its next day.
     @Override
     public void updateAllBalances() {
         List<TimeDeposit> deposits = repository.findAll();
