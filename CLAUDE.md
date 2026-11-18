@@ -13,6 +13,7 @@ The task itself is in `README.md`.
 
 - Work only in `java/`.
 - Never touch `c#/`, `kotlin/`, `python/`, `typescript/`.
+- Never modify `README.md`. It is the original task text.
 
 ## Frozen contract (never change)
 
