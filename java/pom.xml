@@ -59,6 +59,12 @@
             <artifactId>postgresql</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- Aligns the JUnit launcher used by PIT with the Boot managed JUnit platform. -->
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>com.tngtech.archunit</groupId>
             <artifactId>archunit-junit5</artifactId>
@@ -113,6 +119,11 @@
                     <targetTests>
                         <param>org.ikigaidigital.*</param>
                     </targetTests>
+                    <!-- Adapters and wiring are covered by the Testcontainers ITs, which PIT skips. -->
+                    <excludedClasses>
+                        <param>org.ikigaidigital.adapter.*</param>
+                        <param>org.ikigaidigital.config.*</param>
+                    </excludedClasses>
                     <excludedTestClasses>
                         <param>**.*IT</param>
                     </excludedTestClasses>
