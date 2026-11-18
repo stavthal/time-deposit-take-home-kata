@@ -11,10 +11,10 @@ The prompts given to the AI agent (Claude Code), copied word for word.
 - The AI writes code. I make the decisions and verify the results.
 
 Phases follow the runbook: Phase 0 setup, Phase 1 analysis,
-Phase 2 characterization tests, Phase 3 refactor, and so on.
+Phase 2 characterization tests, Phase 3 refactor, Phase 5 contract first API, and so on.
 
 Prompts are grouped by phase. The analysis prompt (1.1) ran first, before setup.
-Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9.
+Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9, 5.1.
 The prompt texts are verbatim, so phase numbers inside them use the old numbering
 (their "Phase 0" is setup plus analysis, their "phase 1" is now Phase 2).
 
@@ -353,3 +353,26 @@ What I checked: this file against the session and the git log.
 What I changed or rejected: nothing.
 
 Result: this entry and one commit. Phase 3 is closed.
+
+## Phase 5: contract first API
+
+### Prompt 5.1: openapi.yaml first
+
+```text
+Write src/main/resources/openapi.yaml first with exactly two
+operations: GET /time-deposits (id, planType, balance, days, withdrawals[id,
+amount, date]) and POST /time-deposits/balance-updates returning 204.
+Generate the server interface with openapi-generator-maven-plugin
+(interfaceOnly, Spring Boot 3). The controller implements it and only calls
+use cases. Point Swagger UI at this file. No Actuator, no other endpoints.
+```
+
+Intent: make the hand written spec the single contract, and generate the server code from it.
+What I checked: the generated sources (one interface, two DTOs, no extras), the full `mvn verify`,
+and a real run with `mvn spring-boot:test-run` (`POST` gives `204`, Swagger UI loads `/openapi.yaml`).
+What I changed or rejected: the plan turned off `/v3/api-docs`. springdoc 2.9.1 then turned Swagger UI off too,
+so it stays on, and a test checks that it lists the same two endpoints.
+A `WebMvcConfigurer` serving `classpath:/` failed to start. Maven now copies the file into `static/` instead.
+A new ArchUnit rule keeps the web adapter on the use case ports. A probe with a bad import made it fail, as expected.
+
+Result: commits `d1bb2db`, `bcfa025`, `2ed6ea4`, `103f950`, `8adb4e0`. 43 unit tests and 10 integration tests green.
