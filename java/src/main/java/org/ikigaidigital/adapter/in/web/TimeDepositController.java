@@ -1,25 +1,21 @@
 package org.ikigaidigital.adapter.in.web;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.info.Info;
+import org.ikigaidigital.adapter.in.web.api.TimeDepositsApi;
+import org.ikigaidigital.adapter.in.web.model.TimeDepositDto;
 import org.ikigaidigital.application.port.in.GetAllTimeDepositsUseCase;
 import org.ikigaidigital.application.port.in.UpdateAllBalancesUseCase;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** The only two endpoints of the service. */
+/**
+ * The only two endpoints of the service. Paths and status codes come from
+ * {@link TimeDepositsApi}, generated from src/main/resources/openapi.yaml.
+ */
 // Assumption: Swagger UI and the OpenAPI spec pages are docs, not endpoints. No Actuator.
-@OpenAPIDefinition(info = @Info(title = "XA Bank Time Deposit API", version = "1.0"))
 @RestController
-@RequestMapping("/time-deposits")
-class TimeDepositController {
+class TimeDepositController implements TimeDepositsApi {
 
     private final UpdateAllBalancesUseCase updateAllBalances;
     private final GetAllTimeDepositsUseCase getAllTimeDeposits;
@@ -31,17 +27,15 @@ class TimeDepositController {
 
     // Assumption: each call applies one month of interest, so it is not idempotent. POST fits that.
     // 204 because the new balances are read with GET.
-    @Operation(summary = "Apply one month of interest to every time deposit")
-    @PostMapping("/balance-updates")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    void updateAllBalances() {
+    @Override
+    public ResponseEntity<Void> updateAllBalances() {
         updateAllBalances.updateAllBalances();
+        return ResponseEntity.noContent().build();
     }
 
     // Assumption: withdrawals are a list of {id, amount, date}, so no withdrawal field is lost.
-    @Operation(summary = "List every time deposit with its withdrawals")
-    @GetMapping
-    List<TimeDepositResponse> getAllTimeDeposits() {
-        return getAllTimeDeposits.getAllTimeDeposits().stream().map(TimeDepositResponse::from).toList();
+    @Override
+    public ResponseEntity<List<TimeDepositDto>> getAllTimeDeposits() {
+        return ResponseEntity.ok(getAllTimeDeposits.getAllTimeDeposits().stream().map(TimeDepositWebMapper::toDto).toList());
     }
 }
