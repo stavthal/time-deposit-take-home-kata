@@ -27,8 +27,8 @@ Yes, let's do that. But first, we need to create the CLAUDE.md, isn't that right
 ```
 
 Intent: approve saving the analysis and starting the work, but write the `CLAUDE.md` rules file first.
-What I checked: TODO
-What I changed or rejected: TODO
+What I checked: The analysis covered the requirements and constraints before any files were created.
+What I changed or rejected: I made CLAUDE.md come before any other work, so the rules applied from the first change.
 
 Result: a first draft of `CLAUDE.md`.
 
