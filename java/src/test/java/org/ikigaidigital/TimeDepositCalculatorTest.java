@@ -106,7 +106,8 @@ class TimeDepositCalculatorTest {
 
     @Test
     void updatesEveryDepositInTheList() {
-        // Every deposit earns interest, so a skipped deposit fails the test.
+        // Each deposit here is chosen to earn non-zero interest, so a deposit
+        // skipped by the loop would keep its old balance and fail the test.
         TimeDeposit basic = new TimeDeposit(1, "basic", BALANCE, 31);
         TimeDeposit student = new TimeDeposit(2, "student", BALANCE, 365);
         TimeDeposit premium = new TimeDeposit(3, "premium", BALANCE, 46);
