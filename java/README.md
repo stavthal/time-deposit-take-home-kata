@@ -25,7 +25,19 @@ To use your own Postgres instead, set `DB_URL`, `DB_USER`, `DB_PASSWORD` and run
 3. `POST /time-deposits/balance-updates`: click **Try it out**, then **Execute**. Applies one month of interest to every deposit. Returns `204`.
 4. Run the GET again to see the new balances.
 
-The OpenAPI contract is at http://localhost:8080/v3/api-docs (JSON) and http://localhost:8080/v3/api-docs.yaml.
+## Contract first
+
+The contract is the hand written `src/main/resources/openapi.yaml`. It has exactly the two operations.
+
+- `mvn compile` runs `openapi-generator-maven-plugin`. It writes the `TimeDepositsApi` interface and the
+  `TimeDepositDto` and `WithdrawalDto` classes to `target/generated-sources/openapi`. Nothing generated is committed.
+- `TimeDepositController` implements `TimeDepositsApi` and only calls the use case ports.
+- Swagger UI shows that same file, served at http://localhost:8080/openapi.yaml.
+- To change the API, edit `openapi.yaml` first. The build then fails until the controller matches.
+
+http://localhost:8080/v3/api-docs is the spec springdoc builds from the running code.
+It stays on because springdoc 2.9.1 turns Swagger UI off with it.
+`TimeDepositApiIT` checks that both specs list only the two endpoints.
 
 Same calls with curl:
 
@@ -67,7 +79,9 @@ export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
 
 ```mermaid
 flowchart LR
-    Web[adapter.in.web<br/>TimeDepositController] --> In[application.port.in<br/>use cases]
+    Spec[openapi.yaml] -.generates.-> Api[TimeDepositsApi<br/>+ DTOs]
+    Web[adapter.in.web<br/>TimeDepositController] -.implements.-> Api
+    Web --> In[application.port.in<br/>use cases]
     In --> Svc[application.service]
     Svc --> Calc[TimeDepositCalculator<br/>+ interest policies]
     Svc --> Out[application.port.out<br/>TimeDepositRepository]
@@ -75,4 +89,5 @@ flowchart LR
     Persist --> DB[(Postgres)]
 ```
 
-`ArchitectureTest` fails the build if `domain`, `interest` or `application` import Spring, JPA or an adapter.
+`ArchitectureTest` fails the build if `domain`, `interest` or `application` import Spring, JPA or an adapter,
+or if `adapter.in.web` reaches past the use case ports.
