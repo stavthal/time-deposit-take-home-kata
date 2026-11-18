@@ -11,10 +11,11 @@ The prompts given to the AI agent (Claude Code), copied word for word.
 - The AI writes code. I make the decisions and verify the results.
 
 Phases follow the runbook: Phase 0 setup, Phase 1 analysis,
-Phase 2 characterization tests, Phase 3 refactor, Phase 5 contract first API, and so on.
+Phase 2 characterization tests, Phase 3 refactor, Phase 4 Spring Boot and persistence,
+Phase 5 contract first API, and so on.
 
 Prompts are grouped by phase. The analysis prompt (1.1) ran first, before setup.
-Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9, 5.1.
+Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9, 4.1 to 4.25, 5.1.
 The prompt texts are verbatim, so phase numbers inside them use the old numbering
 (their "Phase 0" is setup plus analysis, their "phase 1" is now Phase 2).
 
@@ -353,6 +354,368 @@ What I checked: this file against the session and the git log.
 What I changed or rejected: nothing.
 
 Result: this entry and one commit. Phase 3 is closed.
+
+## Phase 4: Spring Boot, hexagonal layout and persistence
+
+Two sessions. Prompts 4.1 to 4.6 built the app. Prompts 4.7 to 4.25 checked the phase, fixed the machine and tidied the run.
+The texts were recovered from the saved Claude Code session files for this project.
+
+### Prompt 4.1: Spring Boot with a hexagonal layout
+
+```text
+Turn java/ into a Spring Boot 3 app with hexagonal layout.
+Before writing code, show me: the pom changes (check versions with Context7),
+the package tree, and every new class with a one-line responsibility.
+Ports: TimeDepositRepository (outbound), two use cases (inbound).
+Persistence: separate JPA entities, Flyway V1 for the two tables exactly as in
+the README (DECIMAL(19,2) for money), V2 with demo seed data, a mapper that
+converts BigDecimal <-> Double. Load withdrawals without N+1.
+The domain packages must not import Spring or JPA.
+```
+
+Intent: add the Spring Boot app, the ports and the Postgres persistence, with the core kept free of Spring.
+What I checked: the plan (pom changes, package tree, one line per class) before any code was written.
+What I changed or rejected: nothing recorded.
+
+Result: commits `af3a375` (Spring Boot 3.5.16 parent), `589ea63`, `fc4e5b7`, `627eabd`, `21a26aa`.
+
+### Prompt 4.2: resume after a pause
+
+```text
+Continue, the session has been paused.
+```
+
+Intent: let the agent finish the approved plan.
+What I checked: the report. 43 tests green, PIT `Killed 29 (100%)`, Flyway applied V1 and V2.
+The persistence IT checks `getPrepareStatementCount() == 1`, so withdrawals load without N+1.
+What I changed or rejected: nothing. The agent added one commit outside the plan, `df61c53`,
+because the PIT JUnit launcher clashed with the one Spring Boot manages.
+
+Result: commits `806268a` (V2 seed data), `24cf62c` (ArchUnit rule), `bc51375` (assumptions), `df61c53`.
+
+### Prompt 4.3: the deleted .iml files
+
+```text
+No, I did not delete them
+```
+
+Intent: answer the agent's question about two `.iml` files that showed as deleted.
+What I checked: that I had not deleted them.
+What I changed or rejected: the agent restored both files from git. Its best guess was an IntelliJ Maven reimport.
+
+Result: clean working tree, no commit.
+
+### Prompt 4.4: REST adapter
+
+```text
+Yes
+```
+
+Intent: approve the next step, the REST adapter with springdoc `2.9.1`.
+What I checked: the report. 48 tests green, and `TimeDepositApiIT` checks that `/v3/api-docs` lists exactly the two endpoints.
+What I changed or rejected: the agent found that its first commit, `08f66d2`, had swept in the `.iml` deletions.
+It was never pushed. The agent redid it as `0dd0a4e`.
+
+Result: commits `0dd0a4e`, `8902618`, `fbcc3dc`, `d169de9`, `e33b9aa`, `8de012f`.
+
+### Prompt 4.5: full run before the push
+
+```text
+Yes. Also, I want one full test run and coverage through JaCaCa reporting, plus PIT, to make sure no tests have broken. I am aware of the changes happened. No need to change any code.
+```
+
+Intent: prove nothing broke, then push.
+What I checked: 41 unit and 7 integration tests green. JaCoCo lines `98.1% (105/107)`, branches `100.0% (8/8)`.
+The 2 missed lines are in `TimeDepositApplication.main`. PIT `Killed 29 (100%)`.
+What I changed or rejected: nothing.
+
+Result: pushed `c4ea358..8de012f main -> main` to my fork.
+
+### Prompt 4.6: a test for main
+
+```text
+Why don't we add a test for that too? Would that be overkill?
+```
+
+Intent: decide whether to cover the 2 missed lines in `main`.
+What I checked: the agent's answer. A test would boot a second full app only to move coverage to 100%.
+What I changed or rejected: rejected the test. Coverage stays at 98.1%, with the gap explained.
+
+Result: no change.
+
+### Prompt 4.7: the app does not run
+
+```text
+Read CLAUDE.md, docs/ai/analysis.md and git log --oneline.
+Plan mode. The app does not run. Diagnose first, fix second.
+
+STEP 1: Diagnose (change nothing):
+- Run: java -version, docker ps, cd java && mvn clean verify
+- Then try to start the app the way a reviewer would.
+- Report the exact error and its root cause, with the log lines as evidence.
+- Check the usual suspects: Docker not running; no Postgres for the app
+  to connect to; Flyway 10+ missing flyway-database-postgresql; table
+  names (Postgres lowercases unquoted timeDeposits); JPA ddl-auto
+  validate vs the Flyway schema; datasource properties; Java version.
+- Propose the smallest fix, then STOP and wait for my approval.
+
+STEP 2: Fix (after I approve), one commit per fix, mvn clean verify after each.
+- A reviewer must be able to run it with Docker and one command.
+  Prefer a docker-compose.yml with Postgres plus `mvn spring-boot:run`,
+  unless you find a simpler option already in the project.
+
+STEP 3: Verify Phase 4, PASS/FAIL with evidence:
+1. mvn clean verify passes; characterization test count unchanged.
+2. The app starts against Postgres; Flyway applies V1 (both tables as in
+   README.md) and V2 (seed data). Show the Flyway log lines.
+3. Package layout: org.ikigaidigital (TimeDeposit, calculator),
+   .interest, .application (use cases + ports),
+   .adapter.out.persistence (entities, repos, adapter, mapper).
+4. No Spring or JPA imports in org.ikigaidigital or .interest (grep).
+5. TimeDeposit.java and the updateBalance signature unchanged.
+6. Outbound port TimeDepositRepository; JPA entities separate from TimeDeposit.
+7. Mapper converts BigDecimal <-> Double, with an assumption comment.
+8. UpdateAllBalancesUseCase loads all, calls updateBalance, saves all in
+   one transaction, does not change days (assumption comment present).
+9. Withdrawals load without N+1 (fetch join or entity graph).
+10. No controller and no endpoints yet (those are Phase 5). No Actuator.
+11. README.md untouched. No dead code.
+12. Every commit atomic, green, conventional message.
+
+End with a table. Say "Ready for Phase 5" only if all pass.
+```
+
+Intent: find out why the app did not start, fix it, and gate the phase.
+What I checked: the diagnosis. The code was fine. The machine used JDK 11 by default,
+`/var/run/docker.sock` pointed at Docker Desktop instead of Colima, and nothing started Postgres for `mvn spring-boot:run`.
+What I changed or rejected: rejected the proposed `compose.yaml` (see 4.8).
+
+Result: no change yet.
+
+### Prompt 4.8: fix the machine, not the project
+
+```text
+You need to fix my machine, not the project. The specs of the project are fine as they are, but my docker setup is relying on some older versions.
+```
+
+Intent: keep the project as it is and repair the local Docker setup.
+What I checked: `mvn clean verify` and `mvn spring-boot:test-run` both passed with no Docker variables set.
+What I changed or rejected: my own `sudo ln -sf $HOME/.colima/default/docker.sock /var/run/docker.sock` failed,
+because the `!` prompt cannot read a password. The agent ran the same command through the macOS password dialog.
+
+Result: the socket points at Colima. No project files changed.
+
+### Prompt 4.9: JDK 17 by default
+
+```text
+Yes, do that.
+```
+
+Intent: make JDK 17 the default for every new shell.
+What I checked: a fresh login shell gives `openjdk version "17"`.
+What I changed or rejected: nothing.
+
+Result: `sdk default java 17.0.0-tem`. No project files changed.
+
+### Prompt 4.10: run the Phase 4 checklist
+
+```text
+Go
+```
+
+Intent: run the 12 checks from 4.7.
+What I checked: the static checks. Check 12 started a fresh build of each of the 15 commits since Phase 3.
+What I changed or rejected: nothing yet (see 4.11).
+
+Result: no change.
+
+### Prompt 4.11: skip the slow check
+
+```text
+I believe that this check is overkill, and we are wasting time. Better skip that specific one that will take several minutes.
+```
+
+Intent: stop the build of every single commit.
+What I checked: 12 of 15 commits had already built green. Of the rest, 2 change docs only, and HEAD passed `mvn clean verify`.
+What I changed or rejected: rejected the full per commit run.
+
+Result: 9 of 12 checks pass. Checks 4, 8 and 10 fail.
+
+### Prompt 4.12: the right fix
+
+```text
+Which is the most correct one architectural wise?
+```
+
+Intent: choose how to fix checks 4, 8 and 10.
+What I checked: the proposal. Move the startup class out of the core package. Wrap the use case in one transaction
+with a decorator in `config`. Keep the controller and accept check 10, since only the phase order differs.
+What I changed or rejected: nothing yet.
+
+Result: no change.
+
+### Prompt 4.13: is it hexagonal
+
+```text
+is this correct to do for hexagonal architecture? Sounds right to me, but not sure.
+```
+
+Intent: confirm the proposal fits the hexagonal rules.
+What I checked: the reasons. The startup class is wiring code and sits outside the core.
+The transaction is a framework detail, so a decorator in `config` keeps `application` free of Spring.
+What I changed or rejected: nothing.
+
+Result: no change.
+
+### Prompt 4.14: apply the fixes
+
+```text
+Yes
+```
+
+Intent: approve the two fixes.
+What I checked: 43 unit and 7 integration tests green after each fix. `TimeDepositCalculatorTest` still has 32 tests.
+A probe class with a Spring import failed the ArchUnit rule for the root package, then was deleted.
+What I changed or rejected: nothing. The move also needed a new `PersistenceConfig` and explicit test config.
+
+Result: commits `7d030b5`, `c0f0aa3`, `5bc2ead`.
+
+### Prompt 4.15: record the locking risk, then push
+
+```text
+Push them, but first write that down to the assumptions, and how you would lock the row briefly, in the assumptions.
+```
+
+Intent: write down that one transaction does not stop a lost update, and how to lock the rows.
+What I checked: `ASSUMPTIONS.md` row 11 and the lock notes under the table.
+What I changed or rejected: nothing. The last commit changes docs and a comment only, so only `mvn compile` ran for it.
+
+Result: commit `e001356`, pushed `8de012f..e001356 main -> main`.
+
+### Prompt 4.16: does the app boot
+
+```text
+so all tests run? The spring boot app still needs the DB and doesn't boot though?
+```
+
+Intent: check that the app runs, not only the tests.
+What I checked: the answer. `TimeDepositApplication` needs a Postgres that is already running.
+`TestTimeDepositApplication` starts Postgres in Docker first.
+What I changed or rejected: nothing.
+
+Result: no change.
+
+### Prompt 4.17: connection refused
+
+```text
+This is where we are right now. It boots, but we get the connection refused.
+
+[pasted startup log, trimmed here; its last line:]
+Unable to obtain connection from database: Connection to localhost:5432 refused.
+```
+
+Intent: report the error I saw in IntelliJ.
+What I checked: the log showed I had run `TimeDepositApplication`, not `TestTimeDepositApplication`.
+What I changed or rejected: nothing.
+
+Result: no change.
+
+### Prompt 4.18: is that the goal
+
+```text
+Yes, TestTime seems to be working. Is t hat the goal though?
+```
+
+Intent: confirm the dev runner meets "Docker and one command".
+What I checked: `mvn spring-boot:test-run` starts Postgres, runs Flyway and serves on `8080`.
+What I changed or rejected: nothing.
+
+Result: no change.
+
+### Prompt 4.19: the source
+
+```text
+how do you know that this is the way indeed? Where is that source? I have missed it perhaps, and my sleep deprivation doesn't help
+```
+
+Intent: get the source for the Testcontainers dev runner.
+What I checked: the Spring Boot reference page "Development-time Services", section "Using Testcontainers at Development Time",
+and the Spring blog post "Improved Testcontainers Support in Spring Boot 3.1".
+What I changed or rejected: the agent corrected itself. It is one of two official ways, the other is Docker Compose support.
+
+Result: no change.
+
+### Prompt 4.20: where is Swagger
+
+```text
+Where is the UI for swagger?
+```
+
+Intent: find the Swagger page.
+What I checked: http://localhost:8080/swagger-ui.html, which works only while the app runs.
+What I changed or rejected: nothing.
+
+Result: no change.
+
+### Prompt 4.21: a shorter Swagger URL
+
+```text
+shouldn't we set another url for swagger, to make it easier t han having to type the swagger-ui.html? Is there a way?
+```
+
+Intent: make Swagger easier to open.
+What I checked: the proposal, `springdoc.swagger-ui.use-root-path: true`.
+What I changed or rejected: nothing yet.
+
+Result: no change.
+
+### Prompt 4.22: Swagger at the root
+
+```text
+Yes. Do that
+```
+
+Intent: approve Swagger at `/`.
+What I checked: the test `rootPathOpensSwaggerUi` failed first with `404`, then passed. 43 unit and 8 integration tests green.
+What I changed or rejected: the auto mode safety check blocked the commit and push. The agent stopped there.
+
+Result: no commit. The change was replaced in 4.25.
+
+### Prompt 4.23: an /api prefix
+
+```text
+That way though, we need different prefix for the api, something like /api .
+```
+
+Intent: keep the API apart from the docs pages.
+What I checked: the answer. Nothing clashes, but `/api` is a sensible convention.
+What I changed or rejected: nothing yet.
+
+Result: no change.
+
+### Prompt 4.24: prefix in the controller or the yml
+
+```text
+Well, change the controller, and add the api prefix, or even better, do it from the .yml file of the application
+```
+
+Intent: add the `/api` prefix.
+What I checked: nothing. I stopped the agent while it was changing the tests.
+What I changed or rejected: rejected the `/api` prefix (see 4.25).
+
+Result: no change.
+
+### Prompt 4.25: Swagger at /docs
+
+```text
+You know what, just change the uri from where we serve swagger, to something like "/docs"
+```
+
+Intent: keep the API paths, and move only the Swagger page.
+What I checked: `/docs` redirects to `/swagger-ui/index.html`, and a test checks it.
+What I changed or rejected: dropped the root path and the `/api` prefix.
+
+Result: commit `57fb190`. I pushed it myself: `e001356..57fb190 main -> main`.
 
 ## Phase 5: contract first API
 
