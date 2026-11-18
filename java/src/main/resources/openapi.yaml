@@ -1,0 +1,77 @@
+openapi: 3.0.3
+info:
+  title: XA Bank Time Deposit API
+  version: "1.0"
+  description: >
+    The only two endpoints of the service. This file is the contract:
+    the server interface is generated from it and Swagger UI shows it.
+tags:
+  - name: time-deposits
+    description: Time deposits and their monthly interest.
+paths:
+  /time-deposits:
+    get:
+      tags: [time-deposits]
+      operationId: getAllTimeDeposits
+      summary: List every time deposit with its withdrawals
+      responses:
+        "200":
+          description: Every stored time deposit, ordered by id.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeDeposit"
+  /time-deposits/balance-updates:
+    post:
+      tags: [time-deposits]
+      operationId: updateAllBalances
+      summary: Apply one month of interest to every time deposit
+      description: >
+        Each call adds one month of interest, so it is not idempotent.
+        Read the new balances with GET /time-deposits.
+      responses:
+        "204":
+          description: Balances updated. No body.
+components:
+  schemas:
+    TimeDeposit:
+      type: object
+      required: [id, planType, balance, days, withdrawals]
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 1
+        planType:
+          type: string
+          description: Lowercase and case sensitive, for example basic, student, premium.
+          example: basic
+        balance:
+          type: number
+          format: double
+          example: 1000.83
+        days:
+          type: integer
+          format: int32
+          example: 31
+        withdrawals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Withdrawal"
+    Withdrawal:
+      type: object
+      required: [id, amount, date]
+      properties:
+        id:
+          type: integer
+          format: int32
+          example: 10
+        amount:
+          type: number
+          example: 50.25
+        date:
+          type: string
+          format: date
+          example: "2026-10-01"
