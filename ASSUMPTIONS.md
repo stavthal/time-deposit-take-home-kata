@@ -21,3 +21,17 @@ How to lock the rows if two updates at once must be safe:
 
 - Pessimistic lock (preferred for a batch): put `@Lock(LockModeType.PESSIMISTIC_WRITE)` on `TimeDepositJpaRepository.findAllByOrderByIdAsc`. Hibernate then reads with `SELECT ... FOR UPDATE`. The use case already runs in one transaction, so the rows stay locked from the read until the commit, and the second update waits and then reads the new balances. The lock is short: one read, one calculation in memory, one write.
 - Optimistic lock (when waits are not wanted): add a `version` column in a `V3` migration and a `@Version` field on `TimeDepositEntity`. The second writer then fails with `OptimisticLockException` instead of waiting, and the caller retries or gets `409`.
+
+## Rules read from the frozen code
+
+These come from `docs/ai/analysis.md` §5. The frozen calculator already decides them,
+so they have no `// Assumption:` comment. They are listed so a reader sees each choice.
+
+| # | Assumption | Reason | Where in code |
+|---|------------|--------|---------------|
+| 13 | 1%, 3% and 5% are annual rates, paid monthly as rate / 12. | The code does `* 0.01 / 12`. Behavior is frozen. | `interest.*InterestPolicy` |
+| 14 | No interest up to day 30. Day 31 is the first day with interest. | The code uses `getDays() > 30`. | `TimeDepositCalculator.updateBalance` |
+| 15 | Premium earns from day 46. | The code uses `getDays() > 45`. | `PremiumInterestPolicy` |
+| 16 | Student earns on days 31 to 365, none from day 366. | The code uses `getDays() < 366`. | `StudentInterestPolicy` |
+| 17 | Withdrawals do not change interest or balance. `balance` is already net of them. | The calculator ignores them, and its behavior is frozen. | `UpdateAllBalancesService` |
+| 18 | Table and column names stay camelCase, quoted in SQL. | The README gives exact names. Postgres folds unquoted names to lower case. | `V1__create_time_deposits_and_withdrawals.sql`, `application.yml` |

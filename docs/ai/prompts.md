@@ -12,10 +12,10 @@ The prompts given to the AI agent (Claude Code), copied word for word.
 
 Phases follow the runbook: Phase 0 setup, Phase 1 analysis,
 Phase 2 characterization tests, Phase 3 refactor, Phase 4 Spring Boot and persistence,
-Phase 5 contract first API, and so on.
+Phase 5 contract first API, Phase 6 submission docs.
 
 Prompts are grouped by phase. The analysis prompt (1.1) ran first, before setup.
-Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9, 4.1 to 4.25, 5.1.
+Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9, 4.1 to 4.25, 5.1, 6.1, 6.2.
 The prompt texts are verbatim, so phase numbers inside them use the old numbering
 (their "Phase 0" is setup plus analysis, their "phase 1" is now Phase 2).
 
@@ -739,3 +739,39 @@ A `WebMvcConfigurer` serving `classpath:/` failed to start. Maven now copies the
 A new ArchUnit rule keeps the web adapter on the use case ports. A probe with a bad import made it fail, as expected.
 
 Result: commits `d1bb2db`, `bcfa025`, `2ed6ea4`, `103f950`, `8adb4e0`. 43 unit tests and 10 integration tests green.
+
+Commits `516f743` (exact GET body, one POST result per plan) and `e5c0e30` (no Hibernate in the core)
+came after Prompt 5.1. Their prompts were not logged.
+
+## Phase 6: submission docs
+
+### Prompt 6.1: draft the docs
+
+```text
+Draft README.md, ASSUMPTIONS.md and AI_USAGE.md from git log,
+docs/ai/prompts.md and the code. README: run steps, Swagger walkthrough for
+both endpoints, architecture, analysis, decisions, trade-offs, what I'd do
+with more time. AI_USAGE: tools, CLAUDE.md rules, commands, and a table of
+what was AI-assisted, how I verified it, and why. Do not invent anything that
+isn't in the history or the prompts log.
+```
+
+Intent: write the submission docs from the recorded history only.
+What I checked: every claim traced to the git log, this file, `docs/ai/analysis.md` or the code, and a full `mvn clean verify`.
+What I changed or rejected: the README went into `java/README.md`, because `CLAUDE.md` forbids changing the root `README.md`.
+`ASSUMPTIONS.md` kept rows 1 to 12 and gained rows 13 to 18, the rules the frozen code already decides.
+
+Result: `mvn clean verify` gave 44 unit and 10 integration tests green.
+Prompt 5.1 reported 43 unit tests, but no test was added since `8adb4e0`, so 44 is the right count.
+
+### Prompt 6.2: commit
+
+```text
+okay, commit. make sure you also check the prompts.md
+```
+
+Intent: commit the docs, with this log brought up to date first.
+What I checked: this file against the git log since Prompt 5.1.
+What I changed or rejected: nothing.
+
+Result: this section and one commit.
