@@ -19,3 +19,7 @@ spring:
         jdbc:
           batch_size: 50
         order_updates: true
+springdoc:
+  swagger-ui:
+    # Swagger UI at http://localhost:8080/docs.
+    path: /docs

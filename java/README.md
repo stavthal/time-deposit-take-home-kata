@@ -20,7 +20,7 @@ To use your own Postgres instead, set `DB_URL`, `DB_USER`, `DB_PASSWORD` and run
 
 ## Trigger the endpoints with Swagger
 
-1. Open http://localhost:8080/swagger-ui.html
+1. Open http://localhost:8080/docs
 2. `GET /time-deposits`: click **Try it out**, then **Execute**. Returns every deposit with `id`, `planType`, `balance`, `days`, `withdrawals`.
 3. `POST /time-deposits/balance-updates`: click **Try it out**, then **Execute**. Applies one month of interest to every deposit. Returns `204`.
 4. Run the GET again to see the new balances.

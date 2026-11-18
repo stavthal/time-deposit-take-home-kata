@@ -13,6 +13,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -68,5 +69,12 @@ class TimeDepositApiIT {
                 path.getValue().fieldNames().forEachRemaining(verb -> operations.add(verb + " " + path.getKey())));
 
         assertThat(operations).containsExactlyInAnyOrder("get /time-deposits", "post /time-deposits/balance-updates");
+    }
+
+    @Test
+    void docsPathOpensSwaggerUi() throws Exception {
+        mockMvc.perform(get("/docs"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", "/swagger-ui/index.html"));
     }
 }
