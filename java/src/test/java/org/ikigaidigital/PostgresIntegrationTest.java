@@ -1,5 +1,6 @@
 package org.ikigaidigital;
 
+import org.ikigaidigital.app.TimeDepositApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -16,7 +17,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@SpringBootTest(properties = "spring.jpa.properties.hibernate.generate_statistics=true")
+@SpringBootTest(classes = TimeDepositApplication.class, properties = "spring.jpa.properties.hibernate.generate_statistics=true")
 @AutoConfigureMockMvc
 @Import(PostgresTestcontainer.class)
 @Transactional

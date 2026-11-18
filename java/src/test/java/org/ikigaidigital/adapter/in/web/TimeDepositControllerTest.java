@@ -1,6 +1,7 @@
 package org.ikigaidigital.adapter.in.web;
 
 import org.ikigaidigital.TimeDeposit;
+import org.ikigaidigital.app.TimeDepositApplication;
 import org.ikigaidigital.application.port.in.GetAllTimeDepositsUseCase;
 import org.ikigaidigital.application.port.in.UpdateAllBalancesUseCase;
 import org.ikigaidigital.domain.TimeDepositDetails;
@@ -11,6 +12,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -26,6 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /** Web slice with hand written fake use cases. No database. */
 @WebMvcTest(TimeDepositController.class)
+@ContextConfiguration(classes = TimeDepositApplication.class)
 @Import(TimeDepositControllerTest.FakeUseCases.class)
 class TimeDepositControllerTest {
 
