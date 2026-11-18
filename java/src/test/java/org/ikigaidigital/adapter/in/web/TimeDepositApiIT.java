@@ -14,6 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -25,35 +26,40 @@ class TimeDepositApiIT {
     @Autowired
     private MockMvc mockMvc;
 
+    // Strict: fails on a missing, extra or renamed field, and on a wrong order.
     @Test
     void getReturnsTheSeedDataWithWithdrawals() throws Exception {
         mockMvc.perform(get("/time-deposits"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(7))
-                .andExpect(jsonPath("$[1].planType").value("basic"))
-                .andExpect(jsonPath("$[1].balance").value(1000.0))
-                .andExpect(jsonPath("$[1].days").value(31))
-                .andExpect(jsonPath("$[1].withdrawals.length()").value(2))
-                .andExpect(jsonPath("$[1].withdrawals[1].amount").value(50.25))
-                .andExpect(jsonPath("$[1].withdrawals[1].date").value("2026-10-01"))
-                .andExpect(jsonPath("$[0].withdrawals").isEmpty());
+                .andExpect(content().json("""
+                        [
+                          {"id": 1, "planType": "basic", "balance": 1000.00, "days": 30, "withdrawals": []},
+                          {"id": 2, "planType": "basic", "balance": 1000.00, "days": 31, "withdrawals": [
+                            {"id": 1, "amount": 100.00, "date": "2026-09-15"},
+                            {"id": 2, "amount": 50.25, "date": "2026-10-01"}]},
+                          {"id": 3, "planType": "student", "balance": 1000.00, "days": 365, "withdrawals": [
+                            {"id": 3, "amount": 20.00, "date": "2026-10-20"}]},
+                          {"id": 4, "planType": "student", "balance": 1000.00, "days": 366, "withdrawals": []},
+                          {"id": 5, "planType": "premium", "balance": 1000.00, "days": 45, "withdrawals": []},
+                          {"id": 6, "planType": "premium", "balance": 1000.00, "days": 46, "withdrawals": []},
+                          {"id": 7, "planType": "basic", "balance": 1234567.00, "days": 45, "withdrawals": [
+                            {"id": 4, "amount": 10000.00, "date": "2026-11-02"}]}
+                        ]""", true));
     }
 
+    // One earning deposit per plan. Boundary days are pinned in TimeDepositCalculatorTest.
     @Test
     void postAppliesOneMonthOfInterestThenGetShowsIt() throws Exception {
         mockMvc.perform(post("/time-deposits/balance-updates")).andExpect(status().isNoContent());
 
         mockMvc.perform(get("/time-deposits"))
                 .andExpect(status().isOk())
-                // basic 30: none; basic 31: +0.83; student 365: +2.50; student 366: none
-                .andExpect(jsonPath("$[0].balance").value(1000.0))
-                .andExpect(jsonPath("$[1].balance").value(1000.83))
-                .andExpect(jsonPath("$[2].balance").value(1002.5))
-                .andExpect(jsonPath("$[3].balance").value(1000.0))
-                // premium 45: none; premium 46: +4.17; basic 1234567.00: +1028.81
-                .andExpect(jsonPath("$[4].balance").value(1000.0))
-                .andExpect(jsonPath("$[5].balance").value(1004.17))
-                .andExpect(jsonPath("$[6].balance").value(1235595.81));
+                // basic: 1234567.00 * 0.01 / 12 = 1028.8058 -> +1028.81
+                .andExpect(jsonPath("$[?(@.id == 7)].balance").value(1235595.81))
+                // student: 1000.00 * 0.03 / 12 = 2.50
+                .andExpect(jsonPath("$[?(@.id == 3)].balance").value(1002.5))
+                // premium: 1000.00 * 0.05 / 12 = 4.1666 -> +4.17
+                .andExpect(jsonPath("$[?(@.id == 6)].balance").value(1004.17));
     }
 
     @Test
