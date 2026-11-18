@@ -14,7 +14,7 @@ Phases follow the runbook: Phase 0 setup, Phase 1 analysis,
 Phase 2 characterization tests, Phase 3 refactor, and so on.
 
 Prompts are grouped by phase. The analysis prompt (1.1) ran first, before setup.
-Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11.
+Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.5.
 The prompt texts are verbatim, so phase numbers inside them use the old numbering
 (their "Phase 0" is setup plus analysis, their "phase 1" is now Phase 2).
 
@@ -238,3 +238,68 @@ What I checked: this file against the session, and the git log.
 What I changed or rejected: Nothing.
 
 Result: three commits: the PIT plugin, the two test fixes, and this log.
+
+## Phase 3: refactor
+
+### Prompt 3.1: interest policies
+
+```text
+Not captured. The context was cleared between sessions, so the exact text is lost.
+In short: move each plan out of the if/else chain into its own InterestPolicy, one plan per commit.
+```
+
+Intent: replace the plan if/else chain with one policy class per plan, without changing any result.
+What I checked: the 32 characterization tests stayed green after every commit.
+What I changed or rejected: nothing recorded.
+
+Result: commits `98387b7` (basic), `2bdd7db` (premium), `7d84664` (student), `e930dd0` (simpler loop),
+and `3104164` (unknown plan earns zero interest, recorded as an assumption).
+
+### Prompt 3.2: readable rounding line
+
+```text
+I believe this line of code is not so readable. Perhaps, we should narrow it down a little bit? I understand the code and it works, it's just that it doesn't look so clean.
+```
+
+Intent: make the balance update line in `TimeDepositCalculator` easier to read.
+What I checked: the rounding still uses `new BigDecimal(interest)` with `setScale(2, RoundingMode.HALF_UP)`, and `mvn test` ran 32 tests green.
+What I changed or rejected: nothing yet. The agent extracted the rounding into a private `roundToCents` helper.
+
+Result: the line became `double newBalance = deposit.getBalance() + roundToCents(interest);`.
+
+### Prompt 3.3: drop the helper comment
+
+```text
+I don't really like the comment that you have added to this helper. Perhaps it could not have a comment at all, as the code it self is pretty much self-explanatory.
+```
+
+Intent: keep the helper free of comments, because its name already says what it does.
+What I checked: the diff and the test run, 32 tests green.
+What I changed or rejected: I rejected the agent's comment about `new BigDecimal(double)` versus `BigDecimal.valueOf`.
+The trap is already recorded in `docs/ai/analysis.md`.
+
+Result: `roundToCents` with no comment.
+
+### Prompt 3.4: commit
+
+```text
+Yes.
+```
+
+Intent: approve the commit.
+What I checked: only `TimeDepositCalculator.java` was staged.
+What I changed or rejected: nothing.
+
+Result: commit `9733e87 refactor: extract cent rounding into roundToCents`.
+
+### Prompt 3.5: update this log
+
+```text
+WE need to also update prompts.md with the prompts we have used.
+```
+
+Intent: log the Phase 3 prompts in this file.
+What I checked: this file against the session and the git log.
+What I changed or rejected: nothing.
+
+Result: this section.
