@@ -18,7 +18,7 @@ class TransactionalUpdateAllBalancesUseCase implements UpdateAllBalancesUseCase 
         this.transaction = new TransactionTemplate(transactionManager);
     }
 
-    // Assumption: two updates at once are out of scope for a monthly batch, so no row locks. See ASSUMPTIONS.md #11.
+    // The read locks the rows (TimeDepositJpaRepository), and this transaction holds the lock until the write commits.
     @Override
     public void updateAllBalances() {
         transaction.executeWithoutResult(status -> delegate.updateAllBalances());

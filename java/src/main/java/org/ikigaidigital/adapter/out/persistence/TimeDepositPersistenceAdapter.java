@@ -21,7 +21,7 @@ class TimeDepositPersistenceAdapter implements TimeDepositRepository {
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<TimeDeposit> findAll() {
         return jpaRepository.findAllByOrderByIdAsc().stream().map(TimeDepositMapper::toDomain).toList();
     }
