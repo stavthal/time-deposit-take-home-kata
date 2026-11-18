@@ -175,8 +175,8 @@ The full read only analysis is in `docs/ai/analysis.md`. The traps it found in t
 
 ## Trade-offs
 
-- No row locks. One transaction stops a half saved month, but not a lost update when two POSTs run at once.
-  `ASSUMPTIONS.md` #11 shows how to add a pessimistic or optimistic lock.
+- Pessimistic row locks, not optimistic. A second POST at the same moment waits instead of failing.
+  It then reads the new balances, so no month is lost. `ASSUMPTIONS.md` #11 has both options.
 - `/v3/api-docs` stays on next to the hand written spec, because of the springdoc 2.9.1 limit above. A test keeps both in step.
 - The local run uses the Testcontainers dev runner, not a `docker-compose.yml`. Spring Boot documents both. The runner needs no extra file.
 - JaCoCo line coverage is not 100%: `TimeDepositApplication.main` is not run by a test.
@@ -187,7 +187,6 @@ The full read only analysis is in `docs/ai/analysis.md`. The traps it found in t
 
 Each item comes from the analysis or the assumptions.
 
-- Lock the rows for the update, as described in `ASSUMPTIONS.md` #11.
 - Decide with the business what advances `days`, and who calls the update each month (analysis §5, items 5 and 6).
 - Page the deposits behind the same `TimeDepositRepository` port, instead of loading all of them (analysis §5, item 19).
 - Money as `BigDecimal` end to end. Today the frozen `TimeDeposit` and calculator keep it in `double` (analysis §4, items 1 to 3).
@@ -200,7 +199,7 @@ mvn verify   # adds the Testcontainers integration tests
 mvn org.pitest:pitest-maven:mutationCoverage   # mutation tests on the core
 ```
 
-Last `mvn clean verify`: 44 unit tests and 10 integration tests, all green.
+Last `mvn clean verify`: 44 unit tests and 11 integration tests, all green.
 
 | Test class | Tests | Checks |
 |------------|-------|--------|
@@ -214,3 +213,4 @@ Last `mvn clean verify`: 44 unit tests and 10 integration tests, all green.
 | `TimeDepositApiIT` | 6 | end to end: exact GET body, POST results, exactly two endpoints, Swagger at `/docs` |
 | `TimeDepositPersistenceAdapterIT` | 3 | Postgres in Testcontainers, one statement for all withdrawals, rounded balances |
 | `DemoSeedDataIT` | 1 | Flyway loads one deposit per boundary with withdrawals |
+| `ConcurrentBalanceUpdateIT` | 1 | 8 updates at once each apply one month, none lost |
