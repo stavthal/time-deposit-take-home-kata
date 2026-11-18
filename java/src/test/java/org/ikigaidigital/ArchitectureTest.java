@@ -23,4 +23,12 @@ class ArchitectureTest {
     static final ArchRule coreDoesNotKnowAdapters = noClasses()
             .that().resideInAnyPackage(CORE)
             .should().dependOnClassesThat().resideInAnyPackage("..adapter..", "..config..");
+
+    // The controller calls use case ports only, never services, persistence or the calculator.
+    @ArchTest
+    static final ArchRule webAdapterOnlyCallsUseCases = noClasses()
+            .that().resideInAPackage("..adapter.in.web..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "..application.service..", "..application.port.out..", "..adapter.out..", "..interest..", "..config..")
+            .orShould().dependOnClassesThat().haveSimpleName("TimeDepositCalculator");
 }
