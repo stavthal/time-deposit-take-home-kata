@@ -1,0 +1,64 @@
+# Prompt log
+
+The prompts given to the AI agent (Claude Code), in order, copied word for word.
+
+## Phase 0: setup and analysis
+
+### Prompt 0.1: analysis
+
+```text
+Read README.md and everything under java/. Do not change any file.
+Give me: (1) the requirements as a checklist, (2) the constraints,
+(3) what exists vs what is missing, (4) every issue in the existing code,
+(5) every ambiguity with a proposed assumption and its reason.
+Quote exact operators and boundaries from the calculator.
+```
+
+Result: the analysis, saved later as `docs/ai/analysis.md`.
+
+### Prompt 0.2: harness first
+
+```text
+Yes, let's do that. But first, we need to create the CLAUDE.md, isn't that right?
+```
+
+Result: a first draft of `CLAUDE.md`.
+
+### Prompt 0.3: finish Phase 0
+
+```text
+Now finish Phase 0 setup. Do not touch any code under java/src.
+
+1. Save your analysis above to docs/ai/analysis.md (requirements checklist,
+   constraints, exists vs missing, issues, ambiguities with proposed
+   assumptions). Add any trap you missed from this list: boundaries 30/31,
+   45/46, 365/366; new BigDecimal(double) rounding; Double for money;
+   unknown plan = zero interest; no withdrawals in TimeDeposit; the
+   assertThat(1).isEqualTo(1) placeholder test.
+
+2. Create CLAUDE.md at the repo root with these rules:
+   - Work only in java/. Never touch the other language folders.
+   - Never change TimeDeposit's public API, or updateBalance's signature,
+     package or results.
+   - Exactly two HTTP endpoints. No Actuator, no extra controllers.
+   - Hexagonal layout: domain and interest packages import no Spring or JPA.
+   - Tests before refactoring. Every change keeps all tests green.
+   - No mocks in domain tests. Testcontainers Postgres for integration tests.
+   - Small steps. One logical change per commit, conventional messages
+     (test:, refactor:, feat:, build:, docs:, chore:).
+   - No abstractions without a clear reason. No dead code.
+   - At the start of each session read docs/ai/analysis.md and git log.
+
+3. Create empty skeletons: ASSUMPTIONS.md, AI_USAGE.md, docs/ai/prompts.md.
+   In docs/ai/prompts.md, log the Phase 0 prompts used so far.
+
+4. Run `cd java && mvn test` and confirm it passes.
+
+5. Commit as two atomic commits:
+   - "chore: add AI harness config (CLAUDE.md) and docs skeleton"
+   - "docs: add analysis of the existing implementation"
+
+Show me the CLAUDE.md content and the git log when done.
+```
+
+Result: `CLAUDE.md`, `ASSUMPTIONS.md`, `AI_USAGE.md`, this file, `docs/ai/analysis.md`, two commits.
