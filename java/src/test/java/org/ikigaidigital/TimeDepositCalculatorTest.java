@@ -70,6 +70,7 @@ class TimeDepositCalculatorTest {
             gold,     100, 1000.00,    1000.00
             # Plan names are case sensitive (`equals`), interest 0
             Basic,    100, 1000.00,    1000.00
+            Student,  100, 1000.00,    1000.00
             PREMIUM,  100, 1000.00,    1000.00
 
             # Balance 0: 0 * rate / 12 = 0 -> 0.00
@@ -105,21 +106,19 @@ class TimeDepositCalculatorTest {
 
     @Test
     void updatesEveryDepositInTheList() {
+        // Every deposit earns interest, so a skipped deposit fails the test.
         TimeDeposit basic = new TimeDeposit(1, "basic", BALANCE, 31);
-        TimeDeposit student = new TimeDeposit(2, "student", BALANCE, 366);
+        TimeDeposit student = new TimeDeposit(2, "student", BALANCE, 365);
         TimeDeposit premium = new TimeDeposit(3, "premium", BALANCE, 46);
-        TimeDeposit unknown = new TimeDeposit(4, "gold", BALANCE, 100);
 
-        calculator.updateBalance(List.of(basic, student, premium, unknown));
+        calculator.updateBalance(List.of(basic, student, premium));
 
         // 1000 * 0.01 / 12 = 0.8333 -> 0.83
         assertThat(basic.getBalance()).isEqualTo(1000.83);
-        // 366 is not < 366, interest 0
-        assertThat(student.getBalance()).isEqualTo(1000.00);
+        // 365 < 366: 1000 * 0.03 / 12 = 2.50 -> 2.50
+        assertThat(student.getBalance()).isEqualTo(1002.50);
         // 1000 * 0.05 / 12 = 4.1666 -> 4.17
         assertThat(premium.getBalance()).isEqualTo(1004.17);
-        // unknown plan, interest 0
-        assertThat(unknown.getBalance()).isEqualTo(1000.00);
     }
 
     @Test
