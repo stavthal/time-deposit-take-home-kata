@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 /** The only two endpoints of the service. */
+// Assumption: Swagger UI and the OpenAPI spec pages are docs, not endpoints. No Actuator.
 @OpenAPIDefinition(info = @Info(title = "XA Bank Time Deposit API", version = "1.0"))
 @RestController
 @RequestMapping("/time-deposits")
@@ -37,6 +38,7 @@ class TimeDepositController {
         updateAllBalances.updateAllBalances();
     }
 
+    // Assumption: withdrawals are a list of {id, amount, date}, so no withdrawal field is lost.
     @Operation(summary = "List every time deposit with its withdrawals")
     @GetMapping
     List<TimeDepositResponse> getAllTimeDeposits() {
