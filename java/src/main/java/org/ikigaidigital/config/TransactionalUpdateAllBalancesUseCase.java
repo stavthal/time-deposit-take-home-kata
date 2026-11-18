@@ -18,7 +18,7 @@ class TransactionalUpdateAllBalancesUseCase implements UpdateAllBalancesUseCase 
         this.transaction = new TransactionTemplate(transactionManager);
     }
 
-    // Assumption: two updates at once are out of scope for a monthly batch, so no row locks.
+    // Assumption: two updates at once are out of scope for a monthly batch, so no row locks. See ASSUMPTIONS.md #11.
     @Override
     public void updateAllBalances() {
         transaction.executeWithoutResult(status -> delegate.updateAllBalances());
