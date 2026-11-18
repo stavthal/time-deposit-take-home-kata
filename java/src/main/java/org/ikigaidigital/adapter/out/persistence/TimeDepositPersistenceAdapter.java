@@ -32,8 +32,7 @@ class TimeDepositPersistenceAdapter implements TimeDepositRepository {
         return jpaRepository.findAllWithWithdrawalsByOrderByIdAsc().stream().map(TimeDepositMapper::toDetails).toList();
     }
 
-    // Assumption: the write is one transaction here, so the application layer stays Spring free.
-    // Reading and writing are two transactions; concurrent balance updates are out of scope.
+    // Joins the use case transaction opened by TransactionalUpdateAllBalancesUseCase.
     @Override
     @Transactional
     public void saveAll(List<TimeDeposit> deposits) {
