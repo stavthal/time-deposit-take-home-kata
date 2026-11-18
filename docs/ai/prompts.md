@@ -14,7 +14,7 @@ Phases follow the runbook: Phase 0 setup, Phase 1 analysis,
 Phase 2 characterization tests, Phase 3 refactor, and so on.
 
 Prompts are grouped by phase. The analysis prompt (1.1) ran first, before setup.
-Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.5.
+Real order: 1.1, 0.1, 0.2, 2.1, 2.2, 2.3, 2.4 to 2.11, 3.1 to 3.9.
 The prompt texts are verbatim, so phase numbers inside them use the old numbering
 (their "Phase 0" is setup plus analysis, their "phase 1" is now Phase 2).
 
@@ -303,3 +303,53 @@ What I checked: this file against the session and the git log.
 What I changed or rejected: nothing.
 
 Result: this section.
+
+### Prompt 3.6: commit the log
+
+```text
+Yes, as long as there are no todos.
+```
+
+Intent: commit the Phase 3 log only if it holds no open TODO.
+What I checked: a search for `todo`, `tbd` and `fixme` found no matches.
+What I changed or rejected: nothing.
+
+Result: commit `b05e01f docs: log phase 3 prompts 3.1 to 3.5`.
+
+### Prompt 3.7: coverage and PIT again
+
+```text
+Run the tests with full coverage, once more, using mutation testing with PIT and show any uncovered branches from the index.html that gets produced.
+```
+
+Intent: prove the refactored code is still fully covered and every PIT mutant is killed.
+What I checked: both `index.html` reports, and the JaCoCo source pages for partly or not covered lines.
+What I changed or rejected: nothing.
+
+Result: 32 tests green. JaCoCo: `0 of 8` branches and `0 of 147` instructions missed, 35 of 35 lines.
+PIT: 26 of 26 mutants killed, down from 33 because the code moved into the policy classes.
+
+### Prompt 3.8: scratch mutation script
+
+```text
+Yes, run it, so we can wrap up and move to the next phase.
+```
+
+Intent: run the mutants PIT cannot make, such as `BigDecimal.valueOf` and other rounding modes.
+What I checked: the per mutant result list, and a clean `git status` afterwards.
+What I changed or rejected: the old script targeted the single file from before the refactor.
+The agent ported it to the policy classes on a scratch copy and added 4 mutants new to this layout.
+
+Result: 39 of 39 mutants killed, none survived.
+
+### Prompt 3.9: close the phase
+
+```text
+Yes.
+```
+
+Intent: log the last prompts and close Phase 3.
+What I checked: this file against the session and the git log.
+What I changed or rejected: nothing.
+
+Result: this entry and one commit. Phase 3 is closed.
