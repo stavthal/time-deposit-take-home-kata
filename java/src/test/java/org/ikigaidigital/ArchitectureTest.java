@@ -17,7 +17,7 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule coreIsFrameworkFree = noClasses()
             .that().resideInAnyPackage(CORE)
-            .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta.persistence..");
+            .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta.persistence..", "org.hibernate..");
 
     @ArchTest
     static final ArchRule coreDoesNotKnowAdapters = noClasses()
